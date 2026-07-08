@@ -4,7 +4,7 @@
 ======================================================================
 [Metadata]
 - Script Name: Git Terminal-to-Sheet Reporter
-- Current Version: v1.1.0 (Directory Filtering)
+- Current Version: v1.2.0 (Directory Filtering)
 - Last Modified: 2026-07-08
 - Author: daeun (Backend Developer)
 ======================================================================
@@ -98,6 +98,12 @@ def parse_arguments():
     since_datetime = datetime.now() - timedelta(days=DEFAULT_DAYS)
     return since_datetime.strftime("%Y-%m-%d 00:00:00")
 
+# 💡 병렬 처리를 위해 단일 리포지토리를 작업하는 래퍼 함수 추가
+def fetch_repo_logs(repo, author, since_date_str):
+    repo_name = os.path.basename(os.path.normpath(repo))
+    logs = get_git_log_detailed(repo, author, since_date_str)
+    return repo_name, logs
+
 def main():
     print("=" * 70)
     print("  Git Terminal-to-Sheet Reporter")
@@ -111,16 +117,24 @@ def main():
     raw_total_logs = []
     commit_groups = defaultdict(list)
     
-    for repo in repositories:
-        repo_name = os.path.basename(os.path.normpath(repo))
-        logs = get_git_log_detailed(repo, AUTHOR, since_date_str)
+    # ThreadPoolExecutor를 사용한 대폭적인 병렬 처리
+    # max_workers를 지정하지 않으면 파이썬이 CPU 코어 수에 맞춰 적절히 조절합니다.
+    with ThreadPoolExecutor() as executor:
+        # 모든 리포지토리에 대해 fetch_repo_logs 함수를 비동기 실행하도록 예약
+        futures = [
+            executor.submit(fetch_repo_logs, repo, AUTHOR, since_date_str) 
+            for repo in repositories
+        ]
         
-        for log in logs:
-            parts = log.split('\t')
-            if len(parts) == 2:
-                date, msg = parts
-                raw_total_logs.append((date, repo_name, msg))
-                commit_groups[msg].append(repo_name)
+        # 완료된 작업 순서대로 결과를 받아와서 기존 딕셔너리 및 리스트에 취합
+        for future in futures:
+            repo_name, logs = future.result()
+            for log in logs:
+                parts = log.split('\t')
+                if len(parts) == 2:
+                    date, msg = parts
+                    raw_total_logs.append((date, repo_name, msg))
+                    commit_groups[msg].append(repo_name)
 
     # [포맷 1] 전체 내역 조립
     raw_total_logs.sort(key=lambda x: x[0], reverse=True)
