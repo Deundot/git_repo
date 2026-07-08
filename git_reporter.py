@@ -126,8 +126,8 @@ def main():
     raw_total_logs.sort(key=lambda x: x[0], reverse=True)
     format_1_lines = []
     for date, repo_name, msg in raw_total_logs:
-        # repo_name을 20칸짜리 고정 너비로 채워 정렬합니다.
-        padded_repo = f"{repo_name:<20}"
+        # repo_name을 25칸짜리 고정 너비로 채워 정렬합니다.
+        padded_repo = f"{repo_name:<25}"
         format_1_lines.append(f"{date}\t{padded_repo}\t{msg}")
 
     # [포맷 2] 폴더별 그룹화 요약 조립
