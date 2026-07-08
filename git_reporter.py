@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+
+"""
+======================================================================
+[Metadata]
+- Script Name: Git Terminal-to-Sheet Reporter
+- Current Version: v1.0.0 (Directory Filtering)
+- Last Modified: 2026-07-08
+- Author: daeun (Backend Developer)
+======================================================================
+"""
+
 import os
 import sys
 import subprocess
