@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-======================================================================
-[Metadata]
-- Script Name: Git Terminal-to-Sheet Reporter
-- Current Version: v1.3.0 (Directory Filtering)
-- Last Modified: 2026-07-08
-- Author: daeun (Backend Developer)
-======================================================================
-"""
-
 import json
 import os
 import sys
@@ -41,15 +31,24 @@ def load_or_create_config():
     # 2. 파일이 없거나 오류가 있다면 사용자에게 직접 입력 받기
     print("=== 초기 설정이 필요합니다 ===")
     config = {}
-    config['AUTHOR'] = input("사용자 이름을 입력하세요: ")
-    config['BASE_WORKSPACE'] = input("프로젝트가 있는 최상위 폴더 경로를 입력하세요: ")
+    
+    print("사용자의 git Author를 입력해주세요.")
+    config['AUTHOR'] = input("=> ")
+    print("=========================")
+    
+    print("프로젝트가 있는 상위 폴더 경로를 입력하세요.")
     print("입력 예시: /Users/daeun/http")
+    config['BASE_WORKSPACE'] = input("=> ")
+    
+    print("=========================")
+    
     
     
     # 사용자에게 쉼표 기준으로 입력받기
-    print("제외할 디렉터리 경로를 쉼표(,)로 구분해서 입력해주세요.")
+    print(" ❌ 제외할 디렉터리 경로를 쉼표(,)로 구분해서 입력해주세요. ")
     print("입력 예시: daeun, /Users/daeun/http/daeun")
-    user_input = input("입력: ")
+    user_input = input("=> ")
+    print("=========================")
     
     # 양쪽 공백을 제거하고 리스트로 분리
     dir_list = [d.strip() for d in user_input.split(',') if d.strip()]
