@@ -10,6 +10,7 @@
 ======================================================================
 """
 
+import json
 import os
 import sys
 import subprocess
@@ -18,16 +19,61 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor  # 💡 병렬 처리를 위한 내장 모듈
 
 # ==========================================
-# [기본 사용자 설정 영역]
+# [기본 설정 영역]
 # ==========================================
-BASE_WORKSPACE = "/Users/daeun/http"
-AUTHOR = "최다은"
 DEFAULT_DAYS = 7  # 명령어 뒤에 아무것도 안 붙였을 때의 기본 조회 기간
-# 스캔에서 완전히 제외하고 싶은 디렉토리 이름 또는 경로를 입력하세요.
-EXCLUDE_DIRS = { "daeun", "/Users/daeun/http/daeun" }
+
+# 설정 파일 이름 정의
+CONFIG_FILE = 'config.json'
+
+def load_or_create_config():
+    """config.json 파일이 있으면 불러오고, 없으면 사용자 입력을 받아 생성합니다."""
+    # 1. 기존 설정 파일이 존재하는지 확인
+    if os.path.exists(CONFIG_FILE):
+        print("기존 설정 파일을 불러오는 중...")
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            try:
+                config = json.load(f)
+                return config
+            except json.JSONDecodeError:
+                print("설정 파일이 손상되었거나 형식이 올바르지 않습니다. 새로 설정합니다.")
+
+    # 2. 파일이 없거나 오류가 있다면 사용자에게 직접 입력 받기
+    print("=== 초기 설정이 필요합니다 ===")
+    config = {}
+    config['AUTHOR'] = input("사용자 이름을 입력하세요: ")
+    config['BASE_WORKSPACE'] = input("프로젝트가 있는 최상위 폴더 경로를 입력하세요: ")
+    print("입력 예시: /Users/daeun/http")
+    
+    
+    # 사용자에게 쉼표 기준으로 입력받기
+    print("제외할 디렉터리 경로를 쉼표(,)로 구분해서 입력해주세요.")
+    print("입력 예시: daeun, /Users/daeun/http/daeun")
+    user_input = input("입력: ")
+    
+    # 양쪽 공백을 제거하고 리스트로 분리
+    dir_list = [d.strip() for d in user_input.split(',') if d.strip()]
+    
+    config['EXCLUDE_DIRS'] = set(dir_list)
+    # JSON 파일로 저장할 때는 set을 list로 변환해야 에러가 나지 않습니다.
+    # 1. 파일에 저장하기 위해 config의 복사본을 만듭니다.
+    json_data = config.copy()
+    
+    # 2. set 형태인 EXCLUDE_DIRS를 JSON이 저장할 수 있는 list 형태로 변환합니다.
+    if 'EXCLUDE_DIRS' in json_data and isinstance(json_data['EXCLUDE_DIRS'], set):
+        json_data['EXCLUDE_DIRS'] = list(json_data['EXCLUDE_DIRS'])
+
+    # 3. config 대신 list로 변환된 json_data를 저장합니다.
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f, indent=4, ensure_ascii=False)
+    
+    print(f"설정이 완료되었습니다! '{CONFIG_FILE}' 파일에 저장되었습니다.\n")
+    return config
 # ==========================================
 
 def find_git_repositories(base_path):
+    config = load_or_create_config()
+    
     """무거운 폴더 및 사용자가 지정한 폴더를 스킵하고, .git 발견 시 하위 탐색을 중단합니다."""
     repo_paths = []
     if not os.path.isdir(base_path):
@@ -36,6 +82,9 @@ def find_git_repositories(base_path):
         
     # 기본 의존성 폴더 목록 + 사용자 제외 폴더 목록 병합
     SKIP_DIRS = { 'node_modules', 'vendor', '.venv', 'venv', 'target', 'build' }
+    
+    # 이제 기존 코드처럼 집합(set)으로 바로 사용 가능합니다.
+    EXCLUDE_DIRS = config.get('EXCLUDE_DIRS', set())
     
     for root, dirs, files in os.walk(base_path):
         # 💡 1. 사용자 설정(EXCLUDE_DIRS)에 따른 필터링 로직 추가
@@ -115,6 +164,11 @@ def fetch_repo_logs(repo, author, since_date_str):
     return repo_name, logs
 
 def main():
+    config = load_or_create_config()
+    
+    BASE_WORKSPACE = config.get('BASE_WORKSPACE')
+    AUTHOR = config.get('AUTHOR')
+    
     print("=" * 70)
     print("  Git Terminal-to-Sheet Reporter")
     print("=" * 70)

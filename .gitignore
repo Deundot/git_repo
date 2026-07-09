@@ -1,0 +1,16 @@
+# --- Python 찌꺼기 파일 제거 ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- 사용자 개인 설정 파일 (절대 업로드 금지) ---
+config.json
+
+# --- PyInstaller 빌드 관련 파일 ---
+build/
+dist/
+*.spec
+
+# --- macOS 시스템 파일 ---
+.DS_Store
