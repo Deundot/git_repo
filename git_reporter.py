@@ -132,13 +132,28 @@ def get_git_log_detailed(repo_path, author, since_date):
         return []
 
 def parse_arguments():
-    """터미널에서 넘어온 인자를 해석하여 조회 시작 날짜를 반환합니다."""
-    if len(sys.argv) < 2:
-        since_datetime = datetime.now() - timedelta(days=DEFAULT_DAYS)
-        print(f"ℹ️ 기간 미지정: 기본 설정에 따라 최근 {DEFAULT_DAYS}일치 데이터를 수집합니다.")
-        return since_datetime.strftime("%Y-%m-%d 00:00:00")
+    """터미널 인자 또는 사용자 입력을 받아 조회 시작 날짜를 반환합니다."""
+    
+    # 1. 터미널에서 인자가 넘어왔는지 확인 (예: ./git_reporter 260601)
+    if len(sys.argv) >= 2:
+        arg = sys.argv[1]
+        print(f"➡️ 터미널 입력 인자 감지: {arg}")
+    else:
+        # 2. 인자가 없다면 (더블 클릭 실행 등), 매번 입력받도록 처리
+        print("=== 조회 기간 설정 ===")
+        print("- 6자리 날짜 입력 (예: 260601 -> 2026-06-01 이후 조회)")
+        print("- 단순 숫자 입력 (예: 3 -> 최근 3일간 조회)")
+        print("- [엔터] 그냥 누르면 기본값 (최근 7일간 조회)")
         
-    arg = sys.argv[1]
+        arg = input("=> ").strip()
+        
+        # 사용자가 아무것도 입력하지 않고 엔터만 친 경우
+        if not arg:
+            since_datetime = datetime.now() - timedelta(days=DEFAULT_DAYS)
+            print(f"ℹ️ 기본 설정 적용: 최근 {DEFAULT_DAYS}일치 데이터를 수집합니다.")
+            return since_datetime.strftime("%Y-%m-%d 00:00:00")
+
+    # 3. 입력된 값(arg) 검증 로직 (다은님의 기존 핵심 로직 활용)
     
     # 케이스 1: 6자리 숫자 입력 (날짜 형식 YYMMDD 검증)
     if len(arg) == 6 and arg.isdigit():
@@ -146,7 +161,7 @@ def parse_arguments():
             # 260601 -> 2026-06-01로 변환
             parsed_date = datetime.strptime(arg, "%y%m%d")
             date_str = parsed_date.strftime("%Y-%m-%d")
-            print(f"ℹ️ 날짜 지정: {date_str} 00:00:00 이후 데이터를 수집합니다.")
+            print(f"ℹ️ 날짜 지정 완료: {date_str} 00:00:00 이후 데이터를 수집합니다.")
             return f"{date_str} 00:00:00"
         except ValueError:
             pass # 6자리 숫자이지만 올바른 날짜가 아닌 경우 아래 단순 숫자 일수 케이스로 이동
@@ -155,11 +170,11 @@ def parse_arguments():
     if arg.isdigit():
         days = int(arg)
         since_datetime = datetime.now() - timedelta(days=days)
-        print(f"ℹ️ 숫자 지정: 최근 {days}일치 데이터를 수집합니다.")
+        print(f"ℹ️ 숫자 지정 완료: 최근 {days}일치 데이터를 수집합니다.")
         return since_datetime.strftime("%Y-%m-%d 00:00:00")
         
-    # 예외 처리
-    print(f"❌ 입력 오류: '{arg}'는 올바른 옵션이 아닙니다. (6자리 날짜 YYMMDD 또는 일수 숫자 입력)")
+    # 예외 처리 (잘못된 형식 입력 시)
+    print(f"❌ 입력 오류: '{arg}'는 올바른 형식이 아닙니다. (6자리 날짜 YYMMDD 또는 일수 숫자 입력)")
     print(f"ℹ️ 기본값인 최근 {DEFAULT_DAYS}일치 데이터로 대체 수집합니다.")
     since_datetime = datetime.now() - timedelta(days=DEFAULT_DAYS)
     return since_datetime.strftime("%Y-%m-%d 00:00:00")
