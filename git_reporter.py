@@ -40,12 +40,15 @@ def load_or_create_config():
     print("=== 초기 설정이 필요합니다 ===")
     config = {}
     
-    print("사용자의 git Author를 입력해주세요.")
+    print("Git 리포트를 수집할 작성자(Author) 이름을 입력하세요.")
+    print("💡 본인의 Git user.name이 기억나지 않는다면 터미널에 아래 명령어를 쳐보세요!")
+    print(" 👉 git config user.name")
     config['AUTHOR'] = input("=> ")
     print("=========================")
     
-    print("프로젝트가 있는 상위 폴더 경로를 입력하세요.")
-    print("입력 예시: /Users/daeun/http")
+    print("상위 작업 공간(Workspace) 경로를 입력하세요.")
+    print("※ 입력하신 폴더 내부의 모든 Git 프로젝트를 자동으로 감지합니다.")
+    print("입력 예시: /Users/betree/http")
     config['BASE_WORKSPACE'] = input("=> ")
     
     print("=========================")
@@ -54,7 +57,7 @@ def load_or_create_config():
     
     # 사용자에게 쉼표 기준으로 입력받기
     print(" ❌ 제외할 디렉터리 경로를 쉼표(,)로 구분해서 입력해주세요. ")
-    print("입력 예시: daeun, /Users/daeun/http/daeun")
+    print("입력 예시: test, /Users/betree/http/test")
     user_input = input("=> ")
     print("=========================")
     
